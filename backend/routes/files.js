@@ -8,7 +8,8 @@ const Activity = require('../models/Activity');
 const { protect } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/error');
 const { uploadWithCascadingFallback, deleteFileByProvider, getDownloadSignedUrl } = require('../config/storage');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
+const uuidv4 = () => crypto.randomUUID();
 
 // Use memory storage for multer so we can stream buffer directly to ImageKit -> Cloudinary -> Supabase
 const upload = multer({

@@ -10,7 +10,8 @@ const { protect } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/error');
 const { sendShareInvitationEmail } = require('../config/mailer');
 const { getDownloadSignedUrl } = require('../config/storage');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
+const uuidv4 = () => crypto.randomUUID();
 const bcrypt = require('bcryptjs');
 
 // =========================================================================

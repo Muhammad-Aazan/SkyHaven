@@ -18,6 +18,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
 
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/error');
@@ -37,16 +38,25 @@ const app = express();
 
 // ─── Connect Database ─────────────────────────────────────────────────────
 connectDB();
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState < 1) {
+    await connectDB();
+  }
+  next();
+});
 
 // ─── Security Middleware ──────────────────────────────────────────────────
 app.use(helmet());
 
 // ─── CORS ──────────────────────────────────────────────────────────────────
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',');
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',').map(s => s.trim());
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, curl)
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app') || origin.includes('localhost')) {
+      return callback(null, true);
+    }
     callback(new Error(`CORS policy: Origin ${origin} not allowed`));
   },
   credentials: true,
