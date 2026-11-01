@@ -1,16 +1,13 @@
 require('dotenv').config();
 
 // ─── DNS Fix: Force IPv4 + use Google & Cloudflare DNS servers ───────────────
-const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');          // prefer IPv4 over IPv6
-dns.setServers([
-  '8.8.8.8',         // Google Primary   (IPv4)
-  '8.8.4.4',         // Google Secondary (IPv4)
-  '1.1.1.1',         // Cloudflare Primary   (IPv4)
-  '1.0.0.1',         // Cloudflare Secondary (IPv4)
-  '2001:4860:4860::8888', // Google Primary   (IPv6)
-  '2001:4860:4860::8844', // Google Secondary (IPv6)
-]);
+try {
+  const dns = require('dns');
+  dns.setDefaultResultOrder('ipv4first'); // prefer IPv4 over IPv6
+  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1']);
+} catch (e) {
+  // Ignore in environments where setting DNS servers is restricted
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 const express = require('express');
@@ -112,7 +109,9 @@ app.use('/api/v1', notificationsRoutes); // exposes /api/v1/activity
 // ─── Health check (public) ──────────────────────────────────────────────────
 app.get('/api/v1/health', async (req, res) => {
   if (mongoose.connection.readyState !== 1) {
-    await connectDB();
+    try {
+      await connectDB();
+    } catch (_) {}
   }
   const dbStatus = mongoose.connection.readyState === 1 ? 'UP' : 'DEGRADED';
   res.json({
