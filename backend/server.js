@@ -110,8 +110,10 @@ app.use('/api/v1/notifications', notificationsRoutes);
 app.use('/api/v1', notificationsRoutes); // exposes /api/v1/activity
 
 // ─── Health check (public) ──────────────────────────────────────────────────
-app.get('/api/v1/health', (req, res) => {
-  const mongoose = require('mongoose');
+app.get('/api/v1/health', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    await connectDB();
+  }
   const dbStatus = mongoose.connection.readyState === 1 ? 'UP' : 'DEGRADED';
   res.json({
     success: true,
