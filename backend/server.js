@@ -1,12 +1,19 @@
 require('dotenv').config();
 
-// ─── DNS Fix: Force IPv4 + use Google & Cloudflare DNS servers ───────────────
+// ─── DNS Fix: Force IPv4 + use Google & Cloudflare DNS servers (IPv4 + IPv6) ───────────
+const dns = require('dns');
 try {
-  const dns = require('dns');
   dns.setDefaultResultOrder('ipv4first'); // prefer IPv4 over IPv6
-  dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1']);
+  dns.setServers([
+    '8.8.8.8',             // Google Primary   (IPv4)
+    '8.8.4.4',             // Google Secondary (IPv4)
+    '1.1.1.1',             // Cloudflare Primary   (IPv4)
+    '1.0.0.1',             // Cloudflare Secondary (IPv4)
+    '2001:4860:4860::8888', // Google Primary   (IPv6)
+    '2001:4860:4860::8844', // Google Secondary (IPv6)
+  ]);
 } catch (e) {
-  // Ignore in environments where setting DNS servers is restricted
+  console.warn('DNS server override warning:', e.message);
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
