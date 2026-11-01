@@ -1,0 +1,22 @@
+{
+  "brandName": "SkyHeaven",
+  "tagline": "Smart, Secure Multi-Tier Cloud Storage & Workspace",
+  "colors": {
+    "primaryBlue": "#0061FE",
+    "skyCyan": "#38BDF8",
+    "navyDark": "#0F172A",
+    "slateDark": "#1E293B",
+    "emeraldSuccess": "#10B981",
+    "backgroundLight": "#F8FAFC"
+  },
+  "fonts": [
+    "Plus Jakarta Sans",
+    "Inter",
+    "JetBrains Mono"
+  ],
+  "adHooks": [
+    "Stop losing your files in messy cloud drives.",
+    "Zero-knowledge encryption meets lightning-fast multi-tier speeds.",
+    "5 GB Free forever. Upgrade to 2 TB when you are ready."
+  ]
+}
