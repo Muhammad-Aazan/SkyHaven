@@ -130,13 +130,16 @@ app.all('*path', (req, res) => {
 app.use(errorHandler);
 
 // ─── Start Server ───────────────────────────────────────────────────────────
-const PORT = parseInt(process.env.PORT || '5000');
-
-app.listen(PORT, () => {
-  console.log(`\n🚀 SkyHeaven API running on http://localhost:${PORT}`);
-  console.log(`   ├─ Environment : ${process.env.NODE_ENV || 'development'}`);
-  console.log(`   ├─ API Base    : http://localhost:${PORT}/api/v1`);
-  console.log(`   └─ Health      : http://localhost:${PORT}/api/v1/health\n`);
-});
+// On Vercel (serverless), export app directly — no app.listen needed.
+// Locally we start the server as usual.
+if (process.env.VERCEL !== '1') {
+  const PORT = parseInt(process.env.PORT || '5000');
+  app.listen(PORT, () => {
+    console.log(`\n🚀 SkyHeaven API running on http://localhost:${PORT}`);
+    console.log(`   ├─ Environment : ${process.env.NODE_ENV || 'development'}`);
+    console.log(`   ├─ API Base    : http://localhost:${PORT}/api/v1`);
+    console.log(`   └─ Health      : http://localhost:${PORT}/api/v1/health\n`);
+  });
+}
 
 module.exports = app;
