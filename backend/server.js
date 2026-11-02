@@ -43,7 +43,7 @@ const app = express();
 // ─── Connect Database ─────────────────────────────────────────────────────
 connectDB();
 app.use(async (req, res, next) => {
-  if (mongoose.connection.readyState < 1) {
+  if (mongoose.connection.readyState !== 1) {
     await connectDB();
   }
   next();

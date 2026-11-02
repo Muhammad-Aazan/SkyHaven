@@ -16,26 +16,35 @@ try {
   // Ignore in sandboxed runtimes
 }
 
+let cachedPromise = null;
 let lastError = null;
 
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) {
+  if (mongoose.connection.readyState === 1) {
     return true;
   }
   if (!process.env.MONGODB_URI) {
     lastError = 'MONGODB_URI environment variable missing';
     return false;
   }
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
+  if (!cachedPromise) {
+    cachedPromise = mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 8000,
+    }).then((conn) => {
+      console.log(`✅ MongoDB Atlas Connected: ${conn.connection.host}`);
+      lastError = null;
+      return conn;
+    }).catch((err) => {
+      lastError = err.message;
+      cachedPromise = null;
+      console.error('❌ MongoDB Atlas connection error:', err.message);
+      throw err;
     });
-    console.log(`✅ MongoDB Atlas Connected: ${conn.connection.host}`);
-    lastError = null;
+  }
+  try {
+    await cachedPromise;
     return true;
   } catch (error) {
-    lastError = error.message;
-    console.error('❌ MongoDB Atlas connection error:', error.message);
     return false;
   }
 };
