@@ -334,6 +334,8 @@ router.post('/reset-password', asyncHandler(async (req, res) => {
   }
 
   user.password = newPassword;
+  user.isEmailVerified = true;
+  user.status = 'active';
   user.otp = undefined;
   user.otpExpires = undefined;
   user.otpPurpose = undefined;
