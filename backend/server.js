@@ -121,6 +121,7 @@ app.get('/api/v1/health', async (req, res) => {
     } catch (_) {}
   }
   const dbStatus = mongoose.connection.readyState === 1 ? 'UP' : 'DEGRADED';
+  const err = connectDB.getLastError ? connectDB.getLastError() : null;
   res.json({
     success: true,
     data: {
@@ -129,7 +130,7 @@ app.get('/api/v1/health', async (req, res) => {
       timestamp: new Date().toISOString(),
       services: {
         apiServer: 'UP (Node.js ' + process.version + ')',
-        database: dbStatus + ' (MongoDB)',
+        database: dbStatus + ' (MongoDB)' + (err ? ` [${err}]` : ''),
         storageEngine: 'UP (Cloudflare R2 S3)',
       },
     },
