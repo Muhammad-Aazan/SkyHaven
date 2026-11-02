@@ -7,7 +7,7 @@ import {
   AdminUserRecord, SecurityReport, ApiResponse, FileVersion
 } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+const API_BASE_URL = (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('onrender')) ? import.meta.env.VITE_API_URL : '/api/v1';
 
 // Initial Seed Data for Demo & Standalone Mode
 const INITIAL_USER: User = {
@@ -154,12 +154,20 @@ async function apiRequest<T>(
       return json;
     }
 
-    // Non-2xx: parse the error body; DON'T fall back to mock (we have a live backend)
+    // Non-2xx: parse real error message from backend
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || 'API request failed');
-  } catch (error) {
+    const apiError = new Error(err.message || 'API request failed');
+    (apiError as any).status = res.status;
+    (apiError as any).data = err.data;
+    throw apiError;
+  } catch (error: any) {
+    // If the server actually responded with an HTTP status (e.g. 409 Email already exists, 400, 401, 404),
+    // NEVER swallow it with mock! Propagate the real message directly to the UI!
+    if (error.status) {
+      throw error;
+    }
     if (mockFallback) {
-      // Simulate realistic micro latency
+      // Simulate realistic micro latency only when completely offline/unreachable
       await new Promise(r => setTimeout(r, 120));
       const data = await mockFallback();
       return { success: true, message: 'Executed in frontend storage engine', data };
@@ -292,7 +300,7 @@ export const authApi = {
   },
 
   // 10. POST /reset-password
-  async resetPassword(data: { token: string; newPassword: string }) {
+  async resetPassword(data: { email: string; otp?: string; token?: string; newPassword: string }) {
     return apiRequest('/auth/reset-password', 'POST', data, () => {
       return { message: 'Password updated successfully. You can now log in.' };
     });

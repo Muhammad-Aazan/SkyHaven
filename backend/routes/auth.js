@@ -51,15 +51,21 @@ const createSession = async (userId, req, token) => {
 // POST /api/v1/auth/signup
 // =========================================================================
 router.post('/signup', asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  let { name, email, password } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ success: false, message: 'Name, email, and password are required.' });
   }
 
+  email = email.trim().toLowerCase();
+
   const existing = await User.findOne({ email });
   if (existing && existing.isEmailVerified) {
-    return res.status(409).json({ success: false, message: 'An account with this email already exists.' });
+    return res.status(409).json({
+      success: false,
+      message: 'This email is already registered. Please log in or use Forgot Password.',
+      alreadyExists: true,
+    });
   }
 
   const otp = generateOtp();
@@ -85,11 +91,13 @@ router.post('/signup', asyncHandler(async (req, res) => {
     });
   }
 
-  await sendOtpEmail(email, otp, 'verify');
+  const mailResult = await sendOtpEmail(email, otp, 'verify');
 
   res.status(200).json({
     success: true,
-    message: `Verification code sent to ${email}`,
+    message: mailResult?.success === false 
+      ? `Verification code generated. If you do not see it in your inbox, check Spam/Junk folder.`
+      : `Verification code sent to ${email}. Please check your inbox and spam folder.`,
     data: {
       email,
       expiresInSeconds: (parseInt(process.env.OTP_EXPIRY_MINUTES || '10')) * 60,
@@ -266,13 +274,17 @@ router.get('/me', protect, asyncHandler(async (req, res) => {
 // POST /api/v1/auth/forgot-password
 // =========================================================================
 router.post('/forgot-password', asyncHandler(async (req, res) => {
-  const { email } = req.body;
+  let { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Email address is required.' });
+  }
 
-  // Always return same message (security: don't reveal if email exists)
-  const successMsg = 'If an account exists, a secure reset link has been dispatched.';
+  email = email.trim().toLowerCase();
 
   const user = await User.findOne({ email });
-  if (!user) return res.json({ success: true, message: successMsg, data: {} });
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'No account found with this email. Please check your email or sign up.' });
+  }
 
   const otp = generateOtp();
   user.otp = otp;
@@ -280,28 +292,45 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
   user.otpPurpose = 'reset';
   await user.save();
 
-  await sendOtpEmail(email, otp, 'reset');
+  const mailResult = await sendOtpEmail(email, otp, 'reset');
 
-  res.json({ success: true, message: successMsg, data: {} });
+  res.json({
+    success: true,
+    message: mailResult?.success === false
+      ? 'Password reset code generated. If you do not see it in your inbox, check Spam/Junk folder.'
+      : `Password reset code sent to ${email}. Please check your inbox or spam folder.`,
+    data: { email, expiresIn: 600 },
+  });
 }));
 
 // =========================================================================
 // POST /api/v1/auth/reset-password
 // =========================================================================
 router.post('/reset-password', asyncHandler(async (req, res) => {
-  const { email, otp, newPassword } = req.body;
+  let { email, otp, token, newPassword } = req.body;
+  const resetCode = (otp || token || '').trim();
+
+  if (!email || !resetCode || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Email, 6-digit reset code, and new password are required.' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' });
+  }
+
+  email = email.trim().toLowerCase();
 
   const user = await User.findOne({ email }).select('+otp +otpExpires +otpPurpose');
-  if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+  if (!user) return res.status(404).json({ success: false, message: 'Account not found.' });
 
   if (!user.otp || user.otpPurpose !== 'reset') {
-    return res.status(400).json({ success: false, message: 'No password reset was requested.' });
+    return res.status(400).json({ success: false, message: 'No password reset code was requested for this account.' });
   }
   if (new Date() > user.otpExpires) {
-    return res.status(400).json({ success: false, message: 'Reset code expired. Please request again.' });
+    return res.status(400).json({ success: false, message: 'Reset code has expired. Please request a new code.' });
   }
-  if (user.otp !== otp) {
-    return res.status(400).json({ success: false, message: 'Invalid reset code.' });
+  if (user.otp !== resetCode) {
+    return res.status(400).json({ success: false, message: 'Invalid verification code. Please check and try again.' });
   }
 
   user.password = newPassword;
@@ -310,10 +339,10 @@ router.post('/reset-password', asyncHandler(async (req, res) => {
   user.otpPurpose = undefined;
   await user.save();
 
-  // Revoke all sessions
+  // Revoke all existing sessions
   await Session.deleteMany({ userId: user._id });
 
-  res.json({ success: true, message: 'Password updated successfully. You can now log in.', data: {} });
+  res.json({ success: true, message: 'Password updated successfully! You can now log in with your new password.', data: {} });
 }));
 
 module.exports = router;

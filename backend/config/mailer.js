@@ -5,14 +5,20 @@ let transporter;
 const getTransporter = () => {
   if (transporter) return transporter;
 
+  const port = parseInt(process.env.SMTP_PORT || '465');
+  const isSecure = port === 465;
+
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_PORT === '465',
+    port: port,
+    secure: isSecure,
     auth: {
       user: process.env.SMTP_USER,
       pass: (process.env.SMTP_PASS || '').replace(/\s+/g, ''),
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 
   return transporter;
@@ -122,10 +128,10 @@ const sendShareInvitationEmail = async ({
       html,
     });
     console.log(`✅ [SHARE EMAIL SENT] Successfully delivered invitation to ${to} (Message ID: ${info.messageId})`);
-    return info;
+    return { success: true, messageId: info.messageId };
   } catch (err) {
     console.error(`❌ [SHARE EMAIL FAILED] SMTP error delivering to ${to}:`, err.message);
-    return null;
+    return { success: false, error: err.message };
   }
 };
 
@@ -169,7 +175,7 @@ const sendOtpEmail = async (to, otp, type = 'verify') => {
       <div class="container">
         <div class="header">
           <h1>☁ SkyHeaven</h1>
-          <p>${titles[type]}</p>
+          <p>${titles[type] || 'Verification'}</p>
         </div>
         <div class="body">
           <p style="color: #e2e8f0; font-size: 15px; font-weight: 600;">Hello,</p>
@@ -204,16 +210,14 @@ const sendOtpEmail = async (to, otp, type = 'verify') => {
         'X-Priority': '1',
         'Importance': 'high',
         'Precedence': 'transactional',
-        'List-Unsubscribe': `<mailto:${process.env.SMTP_USER}?subject=unsubscribe>`,
       },
       priority: 'high',
     });
     console.log(`✅ [EMAIL SENT] OTP successfully delivered to ${to} (Message ID: ${info.messageId})`);
-    return info;
+    return { success: true, messageId: info.messageId };
   } catch (err) {
     console.error(`❌ [EMAIL FAILED] SMTP error delivering to ${to}:`, err.message);
-    console.log(`🔑 [FALLBACK OTP DISPLAY]: ${otp}`);
-    return null;
+    return { success: false, error: err.message };
   }
 };
 
