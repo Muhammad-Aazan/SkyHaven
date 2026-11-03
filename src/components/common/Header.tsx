@@ -34,9 +34,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenProfile, onOpenPlans }) =>
   const handleFetchNotifications = async () => {
     try {
       const res = await notificationsApi.getNotifications();
-      const list = res.data || [];
+      const list = (res.data as NotificationItem[]) || [];
       setNotifications(list);
-      setUnreadCount(list.filter(n => !n.read).length);
+      setUnreadCount(list.filter((n: NotificationItem) => !n.read).length);
     } catch {
       // fallback
     }
