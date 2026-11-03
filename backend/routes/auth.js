@@ -92,12 +92,16 @@ router.post('/signup', asyncHandler(async (req, res) => {
   }
 
   const mailResult = await sendOtpEmail(email, otp, 'verify');
+  const isResend = Boolean(existing); // true if unverified account already existed
 
   res.status(200).json({
     success: true,
-    message: mailResult?.success === false 
-      ? `Verification code generated. If you do not see it in your inbox, check Spam/Junk folder.`
-      : `Verification code sent to ${email}. Please check your inbox and spam folder.`,
+    otpResent: isResend,
+    message: isResend
+      ? `This email already has a pending verification. A new code has been sent to ${email}. Please check your inbox and spam folder.`
+      : mailResult?.success === false 
+        ? `Verification code generated. If you do not see it in your inbox, check Spam/Junk folder.`
+        : `Verification code sent to ${email}. Please check your inbox and spam folder.`,
     data: {
       email,
       expiresInSeconds: (parseInt(process.env.OTP_EXPIRY_MINUTES || '10')) * 60,

@@ -7,7 +7,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<{ email: string; tempToken: string }>;
+  signup: (name: string, email: string, password: string) => Promise<{ email: string; tempToken: string; otpResent: boolean }>;
   verifyOtp: (email: string, otp: string) => Promise<{ verified: boolean; verificationToken: string }>;
   completeSignup: (name: string, email: string, token: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -48,8 +48,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signup = async (name: string, email: string, password: string) => {
-    const res = await authApi.signup({ name, email, password });
-    return { email: res.data.email, tempToken: res.data.tempToken };
+    const res = await authApi.signup({ name, email, password }) as any;
+    return { email: res.data.email, tempToken: res.data.tempToken, otpResent: Boolean(res.otpResent) };
   };
 
   const verifyOtp = async (email: string, otp: string) => {

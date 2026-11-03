@@ -83,7 +83,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setTempToken(res.tempToken);
       setCooldown(60);
       setView('verify');
-      setSuccessMessage(`A 6-digit verification code was dispatched to ${email}`);
+      if (res.otpResent) {
+        setSuccessMessage(`⚠️ This email already has a pending signup. A new verification code was sent to ${email}. Check your inbox & spam.`);
+      } else {
+        setSuccessMessage(`A 6-digit verification code was dispatched to ${email}`);
+      }
     } catch (err: any) {
       setErrorMessage(err.message || 'Signup failed');
     } finally {
