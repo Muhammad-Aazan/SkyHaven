@@ -47,6 +47,20 @@ const createSession = async (userId, req, token) => {
   });
 };
 
+// Diagnostic endpoint to test live email delivery and inspect errors
+router.get('/test-email', asyncHandler(async (req, res) => {
+  const to = req.query.to || process.env.SMTP_USER;
+  const result = await sendOtpEmail(to, '999888', 'verify');
+  res.json({
+    to,
+    smtpUser: process.env.SMTP_USER,
+    smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
+    smtpPort: process.env.SMTP_PORT || '465',
+    hasPass: Boolean(process.env.SMTP_PASS),
+    result,
+  });
+}));
+
 // =========================================================================
 // POST /api/v1/auth/signup
 // =========================================================================
