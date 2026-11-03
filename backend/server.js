@@ -80,12 +80,16 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // ─── Rate Limiting ─────────────────────────────────────────────────────────
+// Trust Vercel's proxy so X-Forwarded-For is used for rate limiting
+app.set('trust proxy', 1);
+
 const authLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute window
   max: 50,                  // 50 requests per minute (relaxed for testing)
   message: { success: false, message: 'Too many requests. Please wait a moment.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false }, // suppress X-Forwarded-For warning on Vercel
 });
 
 const globalLimiter = rateLimit({
@@ -94,6 +98,7 @@ const globalLimiter = rateLimit({
   message: { success: false, message: 'Rate limit exceeded.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false }, // suppress X-Forwarded-For warning on Vercel
 });
 
 app.use('/api/v1/auth', authLimiter);

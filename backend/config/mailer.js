@@ -1,14 +1,12 @@
 const nodemailer = require('nodemailer');
 
-let transporter;
-
+// NOTE: Do NOT cache transporter — on Vercel serverless each invocation is fresh
+// and caching causes stale port/config if env vars change between deploys.
 const getTransporter = () => {
-  if (transporter) return transporter;
-
   const port = parseInt(process.env.SMTP_PORT || '465');
   const isSecure = port === 465;
 
-  transporter = nodemailer.createTransport({
+  return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: port,
     secure: isSecure,
@@ -20,8 +18,6 @@ const getTransporter = () => {
     greetingTimeout: 10000,
     socketTimeout: 15000,
   });
-
-  return transporter;
 };
 
 /**
