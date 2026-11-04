@@ -6,6 +6,8 @@ const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/error');
 
+const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY;
+
 const PLANS = [
   {
     id: 'free',
@@ -160,7 +162,7 @@ router.post('/plans/checkout', protect, asyncHandler(async (req, res) => {
   }
 
   // 2. PAID PLANS (pro, business): Use Stripe if configured
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = STRIPE_SECRET;
   if (stripeKey) {
     try {
       const stripe = require('stripe')(stripeKey);
@@ -229,10 +231,65 @@ router.post('/plans/checkout', protect, asyncHandler(async (req, res) => {
 }));
 
 // =========================================================================
+// POST /api/v1/storage/plans/verify-session  — Verify Stripe Checkout Session
+// =========================================================================
+router.post('/plans/verify-session', protect, asyncHandler(async (req, res) => {
+  const { sessionId } = req.body;
+  if (!sessionId) {
+    return res.status(400).json({ success: false, message: 'Session ID is required' });
+  }
+
+  const stripeKey = STRIPE_SECRET;
+  if (!stripeKey) {
+    return res.status(500).json({ success: false, message: 'Stripe is not configured' });
+  }
+
+  try {
+    const stripe = require('stripe')(stripeKey);
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'Checkout session not found' });
+    }
+
+    if (session.payment_status === 'paid' || session.status === 'complete') {
+      const planId = session.metadata?.planId || 'pro';
+      const newQuota = planId === 'business'
+        ? parseInt(process.env.BUSINESS_QUOTA || '10995116277760')
+        : parseInt(process.env.PRO_QUOTA || '2199023255552');
+
+      const user = await User.findById(req.user._id);
+      if (user) {
+        user.planId = planId;
+        user.storageQuota = newQuota;
+        await user.save();
+      }
+
+      return res.json({
+        success: true,
+        message: `Plan upgraded successfully to ${planId.toUpperCase()}!`,
+        data: {
+          user: user ? user.toPublic() : req.user,
+          planId,
+        },
+      });
+    }
+
+    return res.json({
+      success: false,
+      message: `Payment status: ${session.payment_status}`,
+    });
+  } catch (err) {
+    console.error('❌ [Stripe Verify Session Error]:', err.message);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+}));
+
+// =========================================================================
 // POST /api/v1/storage/webhooks/payment  — Stripe Webhook
 // =========================================================================
 router.post('/webhooks/payment', asyncHandler(async (req, res) => {
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = STRIPE_SECRET;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event = req.body;

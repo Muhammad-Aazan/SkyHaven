@@ -75,7 +75,7 @@ export const FileGrid: React.FC = () => {
       {/* 1. Folders Section */}
       {folders.length > 0 && (
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
             Folders ({folders.length})
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -93,10 +93,10 @@ export const FileGrid: React.FC = () => {
                     }
                   }}
                   onDoubleClick={() => setCurrentFolderId(folder.id)}
-                  className={`group relative p-4 rounded-2xl border transition-all cursor-pointer bg-white ${
+                  className={`group relative p-4 rounded-2xl border transition-all cursor-pointer bg-white dark:bg-slate-900 ${
                     isSelected
-                      ? 'border-blue-500 bg-blue-50/40 ring-2 ring-blue-500/20'
-                      : 'border-slate-200/90 hover:border-slate-300 hover:shadow-subtle'
+                      ? 'border-blue-500 bg-blue-50/40 dark:bg-blue-950/40 ring-2 ring-blue-500/20'
+                      : 'border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-subtle'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -110,7 +110,7 @@ export const FileGrid: React.FC = () => {
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleStar(folder.id, 'folder'); }}
-                        className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-amber-500 transition-colors"
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-amber-500 transition-colors"
                       >
                         <Star className={`w-4 h-4 ${folder.starred ? 'text-amber-500 fill-amber-500' : ''}`} />
                       </button>
@@ -120,18 +120,18 @@ export const FileGrid: React.FC = () => {
                           const rect = e.currentTarget.getBoundingClientRect();
                           setContextMenu({ item: folder, type: 'folder', x: rect.left, y: rect.bottom });
                         }}
-                        className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 transition-colors"
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
 
-                  <h5 className="font-semibold text-sm text-slate-800 truncate mb-1" title={folder.name}>
+                  <h5 className="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate mb-1" title={folder.name}>
                     {folder.name}
                   </h5>
 
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
                     {folder.itemCount} files
                   </p>
                 </motion.div>
@@ -144,7 +144,7 @@ export const FileGrid: React.FC = () => {
       {/* 2. Files Section */}
       {files.length > 0 && (
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
             Files ({files.length})
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
@@ -157,17 +157,13 @@ export const FileGrid: React.FC = () => {
                   transition={{ duration: 0.15 }}
                   onContextMenu={(e) => handleFileContextMenu(e, file)}
                   onClick={(e) => {
-                    if (e.shiftKey || e.metaKey || e.ctrlKey) {
-                      toggleSelectId(file.id);
-                    } else {
-                      toggleSelectId(file.id);
-                    }
+                    toggleSelectId(file.id);
                   }}
                   onDoubleClick={() => setPreviewFile(file)}
-                  className={`group relative flex flex-col justify-between p-3 rounded-2xl border transition-all cursor-pointer bg-white ${
+                  className={`group relative flex flex-col justify-between p-3 rounded-2xl border transition-all cursor-pointer bg-white dark:bg-slate-900 ${
                     isSelected
-                      ? 'border-blue-500 bg-blue-50/30 ring-2 ring-blue-500/20'
-                      : 'border-slate-200/90 hover:border-slate-300 hover:shadow-subtle'
+                      ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-950/40 ring-2 ring-blue-500/20'
+                      : 'border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-subtle'
                   }`}
                 >
                   {/* Select Checkbox Indicator */}
@@ -176,7 +172,7 @@ export const FileGrid: React.FC = () => {
                     className={`absolute top-2.5 left-2.5 z-10 w-5 h-5 rounded-md flex items-center justify-center transition-all ${
                       isSelected
                         ? 'bg-blue-600 text-white'
-                        : 'border border-slate-300 bg-white opacity-0 group-hover:opacity-100'
+                        : 'border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 opacity-0 group-hover:opacity-100'
                     }`}
                   >
                     {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -186,7 +182,7 @@ export const FileGrid: React.FC = () => {
                   <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleStar(file.id, 'file'); }}
-                      className="p-1 bg-white/90 hover:bg-white rounded-md shadow-xs text-slate-400 hover:text-amber-500"
+                      className="p-1 bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-700 rounded-md shadow-xs text-slate-400 hover:text-amber-500"
                     >
                       <Star className={`w-3.5 h-3.5 ${file.starred ? 'text-amber-500 fill-amber-500' : ''}`} />
                     </button>
@@ -196,23 +192,23 @@ export const FileGrid: React.FC = () => {
                         const rect = e.currentTarget.getBoundingClientRect();
                         setContextMenu({ item: file, type: 'file', x: rect.left, y: rect.bottom });
                       }}
-                      className="p-1 bg-white/90 hover:bg-white rounded-md shadow-xs text-slate-400 hover:text-slate-700"
+                      className="p-1 bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-700 rounded-md shadow-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                     >
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  {/* Thumbnail / File Icon Canvas */}
-                  <div className="w-full aspect-square rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden mb-2.5 relative group-hover:bg-slate-100/80 transition-colors">
+                  {/* File Preview Area */}
+                  <div className="w-full aspect-square bg-slate-50 dark:bg-slate-800/60 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
                     {renderFileIcon(file)}
                   </div>
 
-                  {/* Name & Metadata */}
-                  <div className="px-0.5">
-                    <p className="font-semibold text-xs text-slate-800 truncate" title={file.name}>
+                  {/* File Metadata */}
+                  <div className="min-w-0">
+                    <h6 className="font-semibold text-xs text-slate-800 dark:text-slate-100 truncate mb-0.5" title={file.name}>
                       {file.name}
-                    </p>
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1">
+                    </h6>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
                       <span>{formatBytes(file.size)}</span>
                       <span>{formatDate(file.updatedAt)}</span>
                     </div>
@@ -224,7 +220,7 @@ export const FileGrid: React.FC = () => {
         </div>
       )}
 
-      {/* Popover Context Menu */}
+      {/* Floating Context Menu */}
       {contextMenu && (
         <FileContextMenu
           item={contextMenu.item}

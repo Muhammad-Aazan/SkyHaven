@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { useFiles } from '../context/FileContext';
 import { useAuth } from '../context/AuthContext';
+import { storageApi } from '../api/client';
 import { Header } from '../components/common/Header';
 import { Sidebar } from '../components/common/Sidebar';
 import { Breadcrumb } from '../components/common/Breadcrumb';
@@ -23,16 +25,51 @@ import { AdminDashboard } from '../components/admin';
 
 export const DashboardPage: React.FC = () => {
   const { currentSection, viewMode, files, folders, isLoading } = useFiles();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const isAdmin = user?.role === 'admin';
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isPlansOpen, setIsPlansOpen] = useState(false);
 
+  // Handle Stripe callback URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    const upgraded = params.get('upgraded');
+    const modal = params.get('modal');
+
+    if (modal === 'plans') {
+      setIsPlansOpen(true);
+    }
+
+    if (sessionId) {
+      storageApi.verifySession(sessionId).then(async (res) => {
+        if (res.success) {
+          await refreshUser();
+          confetti({
+            particleCount: 150,
+            spread: 90,
+            origin: { y: 0.5 },
+          });
+        }
+      }).catch(console.error).finally(() => {
+        window.history.replaceState({}, '', '/dashboard');
+      });
+    } else if (upgraded) {
+      refreshUser();
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.5 },
+      });
+      window.history.replaceState({}, '', '/dashboard');
+    }
+  }, [refreshUser]);
+
   const totalItems = files.length + folders.length;
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
+    <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden transition-colors duration-200">
       <Header
         onOpenProfile={() => setIsProfileOpen(true)}
         onOpenPlans={() => setIsPlansOpen(true)}
@@ -53,13 +90,13 @@ export const DashboardPage: React.FC = () => {
                 <AdminDashboard />
               ) : (
                 <div className="flex flex-col items-center justify-center py-32 text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900 flex items-center justify-center mx-auto mb-4">
                     <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-base font-semibold text-slate-700 mb-1">Access Restricted</h3>
-                  <p className="text-sm text-slate-400">You don't have permission to view this section.</p>
+                  <h3 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">Access Restricted</h3>
+                  <p className="text-sm text-slate-400 dark:text-slate-500">You don't have permission to view this section.</p>
                 </div>
               )
             ) : (
@@ -103,4 +140,5 @@ export const DashboardPage: React.FC = () => {
     </div>
   );
 };
+
 export default DashboardPage;

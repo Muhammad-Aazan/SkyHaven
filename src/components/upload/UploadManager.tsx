@@ -21,12 +21,12 @@ export const UploadManager: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white border border-slate-200 rounded-2xl shadow-floating overflow-hidden"
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-floating overflow-hidden transition-colors duration-200"
       >
         {/* Dock Header */}
         <div
           onClick={() => setIsMinimized(!isMinimized)}
-          className="p-3.5 bg-slate-900 text-white flex items-center justify-between cursor-pointer"
+          className="p-3.5 bg-slate-900 dark:bg-slate-850 text-white flex items-center justify-between cursor-pointer"
         >
           <div className="flex items-center gap-2.5">
             {inProgressCount > 0 ? (
@@ -60,21 +60,21 @@ export const UploadManager: React.FC = () => {
 
         {/* Upload Items List */}
         {!isMinimized && (
-          <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 p-2 space-y-1">
+          <div className="max-h-64 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 p-2 space-y-1">
             {uploads.map(item => (
               <div key={item.id} className="p-2 text-xs">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-slate-800 truncate max-w-[180px]" title={item.name}>
+                  <span className="font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[180px]" title={item.name}>
                     {item.name}
                   </span>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {item.status === 'completed' && (
-                      <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                      <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Ready
                       </span>
                     )}
                     {item.status === 'uploading' && (
-                      <span className="text-[11px] font-mono text-blue-600">
+                      <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400">
                         {item.progress}% • {item.speed}
                       </span>
                     )}
@@ -94,7 +94,7 @@ export const UploadManager: React.FC = () => {
 
                 {/* Progress Bar */}
                 {item.status === 'uploading' && (
-                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                     <div
                       className="bg-blue-600 h-1.5 rounded-full transition-all duration-150"
                       style={{ width: `${item.progress}%` }}
@@ -102,7 +102,7 @@ export const UploadManager: React.FC = () => {
                   </div>
                 )}
                 {item.status === 'completed' && (
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
                     {formatBytes(item.size)} • Encrypted & Stored
                   </p>
                 )}

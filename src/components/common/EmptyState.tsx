@@ -60,11 +60,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
         multiple
         className="hidden"
       />
-      <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-4 shadow-subtle">
+      <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-100 dark:border-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4 shadow-subtle">
         <Icon className="w-8 h-8 stroke-[1.5]" />
       </div>
-      <h3 className="text-base font-bold text-slate-800 mb-1">{config.title}</h3>
-      <p className="text-sm text-slate-500 max-w-sm mb-6 leading-relaxed">
+      <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">{config.title}</h3>
+      <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-6 leading-relaxed">
         {config.description}
       </p>
 
@@ -79,7 +79,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
           </button>
           <button
             onClick={() => setIsNewFolderOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-colors"
           >
             <span>New Folder</span>
           </button>

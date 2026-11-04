@@ -63,15 +63,15 @@ export const FileContextMenu: React.FC<FileContextMenuProps> = ({
     <div
       ref={menuRef}
       style={{ top: `${adjustedY}px`, left: `${adjustedX}px` }}
-      className="fixed z-50 w-52 bg-white border border-slate-200 rounded-2xl shadow-floating py-1.5 animate-in fade-in zoom-in-95 duration-100"
+      className="fixed z-50 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-floating py-1.5 animate-in fade-in zoom-in-95 duration-100"
     >
       {isTrashView ? (
         <>
           <button
             onClick={() => { onClose(); restoreItem(item.id, type); }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <RotateCcw className="w-4 h-4 text-emerald-600" />
+            <RotateCcw className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Restore</span>
           </button>
           <button
@@ -81,9 +81,9 @@ export const FileContextMenu: React.FC<FileContextMenuProps> = ({
                 permanentlyDeleteItem(item.id, type);
               }
             }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
           >
-            <Trash2 className="w-4 h-4 text-rose-500" />
+            <Trash2 className="w-4 h-4" />
             <span>Delete Forever</span>
           </button>
         </>
@@ -92,83 +92,83 @@ export const FileContextMenu: React.FC<FileContextMenuProps> = ({
           {type === 'file' && (
             <button
               onClick={() => { onClose(); setPreviewFile(item as FileItem); }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
-              <Eye className="w-4 h-4 text-slate-500" />
+              <Eye className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               <span>Preview</span>
+            </button>
+          )}
+
+          {type === 'file' && (
+            <button
+              onClick={() => { onClose(); downloadFile(item.id); }}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <Download className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <span>Download</span>
             </button>
           )}
 
           <button
             onClick={() => { onClose(); setShareTarget({ id: item.id, name: item.name, type }); }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <Share2 className="w-4 h-4 text-blue-600" />
+            <Share2 className="w-4 h-4 text-slate-400 dark:text-slate-500" />
             <span>Share Link</span>
           </button>
 
           <button
             onClick={() => { onClose(); toggleStar(item.id, type); }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <Star className={`w-4 h-4 ${item.starred ? 'text-amber-500 fill-amber-500' : 'text-slate-500'}`} />
-            <span>{item.starred ? 'Unstar' : 'Add to Starred'}</span>
+            <Star className={`w-4 h-4 ${item.starred ? 'text-amber-500 fill-amber-500' : 'text-slate-400 dark:text-slate-500'}`} />
+            <span>{item.starred ? 'Remove Star' : 'Add Star'}</span>
           </button>
 
-          {type === 'file' && (
-            <button
-              onClick={() => { onClose(); downloadFile(item.id); }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            >
-              <Download className="w-4 h-4 text-slate-500" />
-              <span>Download</span>
-            </button>
-          )}
-
-          <div className="my-1 border-t border-slate-100" />
+          <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
 
           <button
             onClick={handleRename}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <Edit2 className="w-4 h-4 text-slate-500" />
+            <Edit2 className="w-4 h-4 text-slate-400 dark:text-slate-500" />
             <span>Rename</span>
           </button>
 
           <button
             onClick={() => { onClose(); setMoveTarget({ id: item.id, name: item.name, type, isCopy: false }); }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <FolderInput className="w-4 h-4 text-slate-500" />
+            <FolderInput className="w-4 h-4 text-slate-400 dark:text-slate-500" />
             <span>Move to...</span>
           </button>
 
           {type === 'file' && (
             <button
               onClick={() => { onClose(); setMoveTarget({ id: item.id, name: item.name, type, isCopy: true }); }}
-              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
-              <Copy className="w-4 h-4 text-slate-500" />
-              <span>Make a copy</span>
+              <Copy className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              <span>Make a Copy</span>
             </button>
           )}
 
           <button
             onClick={() => { onClose(); setInspectedItem(item); }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <Info className="w-4 h-4 text-slate-500" />
-            <span>File details</span>
+            <Info className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+            <span>Get Info</span>
           </button>
 
-          <div className="my-1 border-t border-slate-100" />
+          <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
 
           <button
             onClick={() => { onClose(); trashItem(item.id, type); }}
-            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
           >
-            <Trash2 className="w-4 h-4 text-rose-500" />
-            <span>Move to trash</span>
+            <Trash2 className="w-4 h-4" />
+            <span>Move to Trash</span>
           </button>
         </>
       )}

@@ -499,6 +499,11 @@ export const storageApi = {
     return apiRequest('/storage/plans/checkout', 'POST', { planId });
   },
 
+  // 62b. POST /plans/verify-session (Verify Stripe Checkout Session)
+  async verifySession(sessionId: string) {
+    return apiRequest('/storage/plans/verify-session', 'POST', { sessionId });
+  },
+
   // 63. POST /webhooks/payment
   async processPaymentWebhook(payload: any) {
     return apiRequest('/storage/webhooks/payment', 'POST', payload);

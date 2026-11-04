@@ -47,31 +47,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenPlans, className = '' })
 
   const userInitials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-    : 'MC';
+    : 'SH';
 
   return (
-    <aside className={`w-64 bg-[#F8FAFC] border-r border-[#E2E8F0] flex flex-col justify-between shrink-0 select-none ${className}`}>
+    <aside className={`w-64 bg-[#F8FAFC] dark:bg-slate-900 border-r border-[#E2E8F0] dark:border-slate-800 flex flex-col justify-between shrink-0 select-none transition-colors duration-200 ${className}`}>
       <div>
         {/* SkyHeaven Official Logo */}
-        <div className="h-16 px-5 flex items-center justify-between border-b border-[#E2E8F0] bg-white">
-          <img src="/logo.png" alt="SkyHeaven" className="h-11 w-auto max-w-[190px] object-contain" />
+        <div className="h-16 px-5 flex items-center justify-between border-b border-[#E2E8F0] dark:border-slate-800 bg-white dark:bg-slate-900">
+          <img src="/logo.png" alt="SkyHeaven" className="h-11 w-auto max-w-[190px] object-contain dark:brightness-110" />
         </div>
 
-        {/* Workspace Pill (Figma: Studio workspace / Personal Pro) */}
-        <div className="p-3 mx-3 mt-3 bg-white border border-[#E2E8F0] rounded-xl flex items-center justify-between shadow-subtle cursor-pointer hover:border-[#0061FE] transition-colors">
+        {/* Workspace Pill */}
+        <div className="p-3 mx-3 mt-3 bg-white dark:bg-slate-800/80 border border-[#E2E8F0] dark:border-slate-700/70 rounded-xl flex items-center justify-between shadow-subtle cursor-pointer hover:border-[#0061FE] dark:hover:border-blue-500 transition-colors">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-[#0061FE] text-white flex items-center justify-center font-bold text-xs">
               {user?.name?.[0]?.toUpperCase() || 'S'}
             </div>
             <div>
-              <p className="text-xs font-semibold text-[#0F172A] leading-tight">Studio workspace</p>
-              <p className="text-[10px] text-[#64748B]">{planLabel}</p>
+              <p className="text-xs font-semibold text-[#0F172A] dark:text-slate-100 leading-tight">Studio workspace</p>
+              <p className="text-[10px] text-[#64748B] dark:text-slate-400">{planLabel}</p>
             </div>
           </div>
-          <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />
+          <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8] dark:text-slate-500" />
         </div>
 
-        {/* Primary Navigation List (Figma Exact Item Names & Sizing) */}
+        {/* Primary Navigation List */}
         <nav className="p-3 space-y-0.5 mt-1">
           {navItems.map(item => {
             const Icon = item.icon;
@@ -82,12 +82,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenPlans, className = '' })
                 onClick={() => handleNavClick(item.id)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                   isActive
-                    ? 'bg-white text-[#0061FE] font-semibold shadow-subtle border border-[#E2E8F0]'
-                    : 'text-[#475569] hover:text-[#0F172A] hover:bg-white/60'
+                    ? 'bg-white dark:bg-slate-800 text-[#0061FE] dark:text-blue-400 font-semibold shadow-subtle border border-[#E2E8F0] dark:border-slate-700'
+                    : 'text-[#475569] dark:text-slate-400 hover:text-[#0F172A] dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-800/40'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#0061FE]' : 'text-[#64748B]'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#0061FE] dark:text-blue-400' : 'text-[#64748B] dark:text-slate-400'}`} />
                   <span>{item.label}</span>
                 </div>
               </button>
@@ -96,50 +96,50 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenPlans, className = '' })
         </nav>
       </div>
 
-      {/* Bottom Area: Figma Storage Card & User Card */}
+      {/* Bottom Area: Storage Widget & User Card */}
       <div className="p-3 space-y-3">
-        {/* Storage Widget (Figma: Your storage 64% / Upgrade plan) */}
-        <div className="p-3.5 bg-white border border-[#E2E8F0] rounded-2xl shadow-subtle space-y-2">
+        {/* Storage Widget */}
+        <div className="p-3.5 bg-white dark:bg-slate-800/80 border border-[#E2E8F0] dark:border-slate-700/70 rounded-2xl shadow-subtle space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-[#0F172A]">Your storage</span>
-            <span className="font-semibold text-[#64748B]">{percentUsed}%</span>
+            <span className="font-semibold text-[#0F172A] dark:text-slate-100">Your storage</span>
+            <span className="font-semibold text-[#64748B] dark:text-slate-400">{percentUsed}%</span>
           </div>
 
-          <div className="w-full bg-[#F1F5F9] rounded-full h-1.5 overflow-hidden">
+          <div className="w-full bg-[#F1F5F9] dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
             <div
               className="bg-[#0061FE] h-full rounded-full transition-all duration-500"
               style={{ width: `${percentUsed}%` }}
             />
           </div>
 
-          <p className="text-[11px] text-[#64748B]">
+          <p className="text-[11px] text-[#64748B] dark:text-slate-400">
             {formatBytes(usedBytes)} of {formatBytes(totalBytes)} used
           </p>
 
           <button
             onClick={onOpenPlans}
-            className="text-xs font-semibold text-[#0061FE] hover:underline flex items-center gap-1 pt-1"
+            className="text-xs font-semibold text-[#0061FE] dark:text-blue-400 hover:underline flex items-center gap-1 pt-1"
           >
             <span>Upgrade plan</span>
             <span className="text-[10px]">↗</span>
           </button>
         </div>
 
-        {/* User Profile Card (Figma: Maya Chen / maya@studio.co) */}
-        <div className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl flex items-center justify-between shadow-subtle">
+        {/* User Profile Card */}
+        <div className="p-2.5 bg-white dark:bg-slate-800/80 border border-[#E2E8F0] dark:border-slate-700/70 rounded-xl flex items-center justify-between shadow-subtle">
           <div className="flex items-center gap-2.5 min-w-0">
             {user?.avatar ? (
-              <img src={user.avatar} alt="" className="w-7 h-7 rounded-full object-cover" />
+              <img src={user.avatar} alt="" className="w-7 h-7 rounded-full object-cover ring-1 ring-slate-200 dark:ring-slate-700" />
             ) : (
-              <div className="w-7 h-7 rounded-full bg-blue-100 text-[#0061FE] text-xs font-bold flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-950 text-[#0061FE] dark:text-blue-400 text-xs font-bold flex items-center justify-center shrink-0">
                 {userInitials}
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-[#0F172A] truncate leading-tight">
+              <p className="text-xs font-semibold text-[#0F172A] dark:text-slate-100 truncate leading-tight">
                 {user?.name || 'SkyHeaven Member'}
               </p>
-              <p className="text-[10px] text-[#64748B] truncate">
+              <p className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">
                 {user?.email || ''}
               </p>
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { FileProvider } from './context/FileContext';
 import { LandingPage } from './pages/LandingPage';
@@ -96,7 +97,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased transition-colors duration-200">
       {currentPage === 'landing' ? (
         <LandingPage
           onOpenAuth={handleOpenAuth}
@@ -119,11 +120,13 @@ const AppContent: React.FC = () => {
 };
 
 export const App: React.FC = () => (
-  <AuthProvider>
-    <FileProvider>
-      <AppContent />
-    </FileProvider>
-  </AuthProvider>
+  <ThemeProvider>
+    <AuthProvider>
+      <FileProvider>
+        <AppContent />
+      </FileProvider>
+    </AuthProvider>
+  </ThemeProvider>
 );
 
 export default App;
