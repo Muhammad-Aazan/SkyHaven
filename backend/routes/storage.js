@@ -169,7 +169,6 @@ router.post('/plans/checkout', protect, asyncHandler(async (req, res) => {
       const origin = req.headers.origin || req.headers.referer?.replace(/\/$/, '') || process.env.FRONTEND_URL || 'https://skyhaven-vert.vercel.app';
 
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
         line_items: [
           {
             price_data: {
