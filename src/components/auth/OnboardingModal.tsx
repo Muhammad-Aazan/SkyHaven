@@ -211,13 +211,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 Profile Ready, {user?.name || name}!
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-2 max-w-sm mx-auto leading-relaxed">
-                Your personal vault has been initialized with <strong>5 GB Free Cloud Storage</strong> on zero-knowledge encrypted infrastructure.
+                Your personal vault has been initialized with <strong>25 GB Free Cloud Storage</strong> on zero-knowledge encrypted infrastructure.
               </p>
 
               <div className="my-6 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-2.5 text-xs text-slate-600">
                 <div className="flex items-center gap-2 font-medium">
                   <HardDrive className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span>5 GB High-Speed Storage Allocation</span>
+                  <span>25 GB High-Speed Storage Allocation</span>
                 </div>
                 <div className="flex items-center gap-2 font-medium">
                   <Shield className="w-4 h-4 text-blue-600 shrink-0" />

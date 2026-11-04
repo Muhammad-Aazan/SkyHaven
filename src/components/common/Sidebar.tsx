@@ -15,6 +15,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ onOpenPlans, className = '' }) => {
   const { currentSection, setCurrentSection, setCurrentFolderId, storageStats } = useFiles();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const navItems: { id: AppSection; label: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'my_files', label: 'My files', icon: Folder },
@@ -23,7 +24,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenPlans, className = '' })
     { id: 'shared_with_me', label: 'Shared with me', icon: Users },
     { id: 'shared_by_me', label: 'Shared by me', icon: Link2 },
     { id: 'trash', label: 'Trash', icon: Trash2 },
-    { id: 'admin', label: 'Storage & Admin', icon: HardDrive }
+    // Admin-only section — hidden from regular users
+    ...(isAdmin ? [{ id: 'admin' as AppSection, label: 'Storage & Admin', icon: HardDrive }] : []),
   ];
 
   const handleNavClick = (section: AppSection) => {
@@ -34,14 +36,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenPlans, className = '' })
   };
 
   const usedBytes = storageStats?.usedBytes ?? user?.storageUsed ?? 0;
-  const totalBytes = storageStats?.totalQuotaBytes ?? user?.storageQuota ?? (5 * 1024 * 1024 * 1024);
+  const totalBytes = storageStats?.totalQuotaBytes ?? user?.storageQuota ?? (25 * 1024 * 1024 * 1024);
   const percentUsed = totalBytes > 0 ? Math.min(100, Math.round((usedBytes / totalBytes) * 100)) : 0;
 
   const planLabel = user?.planId === 'business'
     ? 'Sky Enterprise'
     : user?.planId === 'pro'
     ? 'Sky Professional'
-    : 'Basic (Starter)';
+    : 'Basic (25 GB)';
 
   const userInitials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()

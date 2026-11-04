@@ -201,7 +201,7 @@ router.post('/complete-signup', asyncHandler(async (req, res) => {
   user.name = name;
   user.isEmailVerified = true;
   user.status = 'active';
-  user.storageQuota = parseInt(process.env.FREE_QUOTA || '5368709120');
+  user.storageQuota = Math.max(25 * 1024 * 1024 * 1024, parseInt(process.env.FREE_QUOTA || '26843545600'));
   await user.save();
 
   // Create welcome notification
@@ -209,7 +209,7 @@ router.post('/complete-signup', asyncHandler(async (req, res) => {
     await Notification.create({
       userId: user._id,
       title: 'Welcome to SkyHeaven!',
-      message: 'Your personal vault with 5 GB free encrypted cloud storage is ready. You can safely upload, view, and share files.',
+      message: 'Your personal vault with 25 GB free encrypted cloud storage is ready. You can safely upload, view, and share files.',
       type: 'system',
       read: false,
     });

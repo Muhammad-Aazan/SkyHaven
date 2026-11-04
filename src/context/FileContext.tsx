@@ -73,7 +73,7 @@ interface FileContextType {
   setIsCommandPaletteOpen: (open: boolean) => void;
 
   // Refresh
-  refreshData: () => Promise<void>;
+  refreshData: (showLoader?: boolean) => Promise<void>;
 }
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
@@ -112,8 +112,10 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const refreshData = useCallback(async () => {
-    setIsLoading(true);
+  const refreshData = useCallback(async (showLoader = false) => {
+    if (showLoader) {
+      setIsLoading(true);
+    }
     setSelectedIds([]);
     try {
       if (searchQuery.trim().length > 0) {
@@ -192,7 +194,7 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [currentFolderId, currentSection]);
 
   useEffect(() => {
-    refreshData();
+    refreshData(files.length === 0 && folders.length === 0);
     refreshStorageStats();
   }, [refreshData, refreshStorageStats]);
 
@@ -239,17 +241,27 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const processUpload = async (item: UploadItem) => {
     try {
-      setUploads(prev => prev.map(u => u.id === item.id ? { ...u, status: 'uploading', progress: 25 } : u));
+      setUploads(prev => prev.map(u => u.id === item.id ? { ...u, status: 'uploading', progress: 5, speed: 'Connecting...' } : u));
 
-      // Direct Cascading Multi-tier Upload (ImageKit -> Cloudinary -> Supabase)
-      setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress: 65, speed: '4.8 MB/s' } : u));
+      const res = await filesApi.uploadFile(
+        item.file,
+        item.parentFolderId,
+        (progress, speed) => {
+          setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress, speed } : u));
+        }
+      );
+
+      setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress: 100, status: 'completed', speed: 'Done' } : u));
       
-      const res = await filesApi.uploadFile(item.file, item.parentFolderId);
+      // Optimistically add newly uploaded file to list if relevant
+      if (res.data && res.data.id) {
+        setFiles(prev => [res.data, ...prev.filter(f => f.id !== res.data.id)]);
+      }
 
-      setUploads(prev => prev.map(u => u.id === item.id ? { ...u, progress: 100, status: 'completed' } : u));
-      await refreshData();
-      await refreshStorageStats();
-      await refreshUser();
+      // Smooth background update without clearing the screen
+      refreshData(false);
+      refreshStorageStats();
+      refreshUser();
     } catch (err: any) {
       setUploads(prev => prev.map(u => u.id === item.id ? {
         ...u,
@@ -269,7 +281,7 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const createFolder = async (name: string, color?: string) => {
     await foldersApi.createFolder(name, currentFolderId, color || '#0061FE');
-    await refreshData();
+    await refreshData(false);
   };
 
   const renameItem = async (id: string, type: 'file' | 'folder', newName: string) => {
@@ -278,7 +290,7 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       await foldersApi.renameFolder(id, newName);
     }
-    await refreshData();
+    await refreshData(false);
   };
 
   const trashItem = async (id: string, type: 'file' | 'folder') => {
@@ -287,26 +299,26 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       await foldersApi.trashFolder(id);
     }
-    await refreshData();
+    await refreshData(false);
     await refreshStorageStats();
   };
 
   const restoreItem = async (id: string, type: 'file' | 'folder') => {
     await trashApi.restoreItem(id, type);
-    await refreshData();
+    await refreshData(false);
     await refreshStorageStats();
   };
 
   const permanentlyDeleteItem = async (id: string, type: 'file' | 'folder') => {
     await trashApi.permanentlyDeleteItem(id, type);
-    await refreshData();
+    await refreshData(false);
     await refreshStorageStats();
     await refreshUser();
   };
 
   const emptyTrash = async () => {
     await trashApi.emptyTrash();
-    await refreshData();
+    await refreshData(false);
     await refreshStorageStats();
     await refreshUser();
   };
@@ -317,7 +329,7 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       await searchApi.toggleFolderStar(id);
     }
-    await refreshData();
+    await refreshData(false);
   };
 
   const moveItem = async (id: string, type: 'file' | 'folder', targetFolderId: string | null) => {
@@ -326,12 +338,12 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       await foldersApi.moveFolder(id, targetFolderId);
     }
-    await refreshData();
+    await refreshData(false);
   };
 
   const copyItem = async (id: string, targetFolderId: string | null) => {
     await filesApi.copyFile(id, targetFolderId);
-    await refreshData();
+    await refreshData(false);
     await refreshStorageStats();
   };
 

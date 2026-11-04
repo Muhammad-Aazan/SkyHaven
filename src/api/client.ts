@@ -161,27 +161,69 @@ export const filesApi = {
     return apiRequest(`/files?folder=${parentFolderId || 'root'}`, 'GET');
   },
 
-  // 20. POST /upload (Direct Cascading Multi-tier Upload)
-  async uploadFile(file: File, parentFolderId?: string | null): Promise<ApiResponse<FileItem>> {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (parentFolderId && parentFolderId !== 'root') {
-      formData.append('parentFolderId', parentFolderId);
-    }
+  // 20. POST /upload (High-Speed Direct Upload with Real-time Progress)
+  async uploadFile(
+    file: File,
+    parentFolderId?: string | null,
+    onProgress?: (percent: number, speed: string) => void
+  ): Promise<ApiResponse<FileItem>> {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (parentFolderId && parentFolderId !== 'root') {
+        formData.append('parentFolderId', parentFolderId);
+      }
 
-    const token = localStorage.getItem('skyhaven_token');
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE_URL}/files/upload`, true);
 
-    const res = await fetch(`${API_BASE_URL}/files/upload`, {
-      method: 'POST',
-      headers,
-      body: formData,
+      const token = localStorage.getItem('skyhaven_token');
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+      const startTime = Date.now();
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.min(99, Math.round((e.loaded / e.total) * 100));
+          const elapsedTime = (Date.now() - startTime) / 1000;
+          let speedStr = 'Connecting...';
+          if (elapsedTime > 0.1) {
+            const bytesPerSec = e.loaded / elapsedTime;
+            if (bytesPerSec > 1024 * 1024) {
+              speedStr = `${(bytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`;
+            } else {
+              speedStr = `${(bytesPerSec / 1024).toFixed(0)} KB/s`;
+            }
+          }
+          if (onProgress) onProgress(percent, speedStr);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const json = JSON.parse(xhr.responseText);
+            if (onProgress) onProgress(100, 'Processing...');
+            resolve(json);
+          } catch {
+            resolve({ success: true, message: 'Uploaded successfully', data: {} as any });
+          }
+        } else {
+          try {
+            const err = JSON.parse(xhr.responseText);
+            reject(new Error(err.message || 'Upload failed'));
+          } catch {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error('Network error during upload. Please check your connection.'));
+      };
+
+      xhr.send(formData);
     });
-
-    if (res.ok) return await res.json();
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || 'Upload failed');
   },
 
   // 20b. POST /upload/initiate

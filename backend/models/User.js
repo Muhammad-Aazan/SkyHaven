@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ['user', 'admin', 'enterprise'], default: 'user' },
     isEmailVerified: { type: Boolean, default: false },
     planId: { type: String, enum: ['free', 'pro', 'business'], default: 'free' },
-    storageQuota: { type: Number, default: 5 * 1024 * 1024 * 1024 }, // 5 GB
+    storageQuota: { type: Number, default: 25 * 1024 * 1024 * 1024 }, // 25 GB Basic
     storageUsed: { type: Number, default: 0 },
     isOnboarded: { type: Boolean, default: false },
     status: { type: String, enum: ['active', 'suspended', 'pending'], default: 'pending' },
@@ -52,7 +52,7 @@ userSchema.methods.toPublic = function () {
     role: this.role,
     isEmailVerified: this.isEmailVerified,
     planId: this.planId,
-    storageQuota: this.storageQuota,
+    storageQuota: Math.max(this.storageQuota || 0, 25 * 1024 * 1024 * 1024),
     storageUsed: this.storageUsed,
     isOnboarded: this.isOnboarded ?? false,
     createdAt: this.createdAt,

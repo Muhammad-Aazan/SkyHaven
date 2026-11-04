@@ -97,10 +97,11 @@ router.post('/upload', protect, upload.single('file'), asyncHandler(async (req, 
   const { originalname, size, mimetype, buffer } = req.file;
   const parentFolderId = req.body.parentFolderId === 'root' || !req.body.parentFolderId ? null : req.body.parentFolderId;
 
-  // Check user storage quota
+  // Check user storage quota (minimum 25 GB for all users)
   const user = await User.findById(req.user._id);
-  if (user.storageUsed + size > user.storageQuota) {
-    return res.status(413).json({ success: false, message: 'Storage quota exceeded. Please upgrade plan.' });
+  const effectiveQuota = Math.max(user.storageQuota || 0, 25 * 1024 * 1024 * 1024);
+  if (user.storageUsed + size > effectiveQuota) {
+    return res.status(413).json({ success: false, message: 'Storage quota exceeded (25 GB). Please upgrade plan.' });
   }
 
   // CASCADING MULTI-TIER UPLOAD: ImageKit -> Cloudinary -> Supabase

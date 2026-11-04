@@ -19,7 +19,7 @@ export const StorageCard: React.FC<StorageCardProps> = ({ onOpenPlans }) => {
   const [hoveredDay, setHoveredDay] = useState<{ day: string; gb: number } | null>(null);
 
   const usedBytes = storageStats?.usedBytes ?? user?.storageUsed ?? 0;
-  const totalBytes = storageStats?.totalQuotaBytes ?? user?.storageQuota ?? (5 * 1024 * 1024 * 1024);
+  const totalBytes = storageStats?.totalQuotaBytes ?? user?.storageQuota ?? (25 * 1024 * 1024 * 1024);
   const percentUsed = totalBytes > 0 ? Math.min(100, Math.round((usedBytes / totalBytes) * 100)) : 0;
   const remainingBytes = Math.max(0, totalBytes - usedBytes);
 
@@ -36,7 +36,7 @@ export const StorageCard: React.FC<StorageCardProps> = ({ onOpenPlans }) => {
     ? 'Enterprise Vault 10 TB'
     : user?.planId === 'pro'
     ? 'Pro Vault 2 TB'
-    : 'Basic Vault 5 GB';
+    : 'Basic Vault 25 GB';
 
   const categories = [
     { id: 'images', label: 'Images & Photos', bytes: breakdown.images, color: 'bg-emerald-500', hex: '#10B981', icon: ImageIcon },

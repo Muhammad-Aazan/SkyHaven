@@ -10,11 +10,11 @@ const PLANS = [
   {
     id: 'free',
     name: 'Sky Starter',
-    quotaBytes: 5 * 1024 * 1024 * 1024,
-    quotaLabel: '5 GB Cloud Storage',
+    quotaBytes: 25 * 1024 * 1024 * 1024,
+    quotaLabel: '25 GB Cloud Storage',
     priceMonthly: 0,
-    description: 'Perfect for casual file backups and personal sharing.',
-    features: ['5 GB encrypted storage', '30-day version history', '1 GB maximum single file size', 'Standard link sharing'],
+    description: 'Generous 25 GB free capacity for everyone, secure backups and personal sharing.',
+    features: ['25 GB encrypted storage', '30-day version history', '5 GB maximum single file size', 'Standard link sharing'],
   },
   {
     id: 'pro',
@@ -64,13 +64,15 @@ router.get('/usage', protect, asyncHandler(async (req, res) => {
     else breakdown.others += f.size;
   });
 
+  const effectiveQuota = Math.max(user.storageQuota || 0, 25 * 1024 * 1024 * 1024);
+
   res.json({
     success: true,
     message: 'Storage usage.',
     data: {
       usedBytes: user.storageUsed,
-      totalQuotaBytes: user.storageQuota,
-      percentageUsed: user.storageQuota > 0 ? Math.min(100, (user.storageUsed / user.storageQuota) * 100) : 0,
+      totalQuotaBytes: effectiveQuota,
+      percentageUsed: effectiveQuota > 0 ? Math.min(100, (user.storageUsed / effectiveQuota) * 100) : 0,
       breakdown,
       fileCount: files.length,
       folderCount: folders.length,

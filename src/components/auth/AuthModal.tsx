@@ -369,7 +369,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       A fresh start for your files.
                     </h2>
                     <p className="text-xs sm:text-sm text-[#64748B] mt-1">
-                      Create your account. Get 15 GB of breathing room.
+                      Create your account. Get 25 GB of breathing room.
                     </p>
                   </div>
 

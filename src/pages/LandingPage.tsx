@@ -23,7 +23,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const faqs = [
     {
       q: 'Can I use Skyhaven for free?',
-      a: 'Absolutely. Your free account includes 15 GB of secure storage, file sharing, and access on every device. No credit card needed.'
+      a: 'Absolutely. Your free account includes 25 GB of secure storage, file sharing, and access on every device. No credit card needed.'
     },
     {
       q: 'Can I share files with people who don’t use Skyhaven?',
@@ -130,7 +130,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           <p className="text-xs text-[#64748B] pt-1">
-            15 GB free · No credit card required · Yours to keep
+            25 GB free · No credit card required · Yours to keep
           </p>
         </div>
 
@@ -401,7 +401,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <p className="text-xs text-[#64748B] mb-4">A home for your everyday files.</p>
                 <div className="p-2.5 bg-blue-50/70 border border-blue-200/60 rounded-xl mb-6">
-                  <span className="text-xs font-bold text-[#0061FE]">15 GB of secure storage</span>
+                  <span className="text-xs font-bold text-[#0061FE]">25 GB of secure storage</span>
                 </div>
                 <ul className="space-y-3 text-xs text-[#475569] mb-8">
                   <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-[#0061FE]" /> Secure file storage</li>

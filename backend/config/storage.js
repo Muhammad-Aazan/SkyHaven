@@ -56,66 +56,105 @@ const uploadToSupabase = async (fileBuffer, storageKey, mimeType) => {
   };
 };
 
+const withTimeout = (promise, ms, label) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms))
+  ]);
+};
+
 /**
  * =========================================================================
  * CASCADING MULTI-TIER UPLOAD ENGINE (ImageKit -> Cloudinary -> Supabase)
  * =========================================================================
- * 1. Pehle Tier 1 (ImageKit) try karega
- * 2. Agar ImageKit limit exceed ho ya error aaye, Tier 2 (Cloudinary) pe switch karega
- * 3. Agar Cloudinary bhi limit exceed kare, Tier 3 (Supabase) pe switch karega
+ * Fast timeout on each tier ensures instant fallback with zero stalling
  */
 const uploadWithCascadingFallback = async (fileBufferOrBase64, fileName, mimeType, userId) => {
   const errors = [];
+  const isImage = mimeType?.startsWith('image/');
 
-  // --- TIER 1: ImageKit ---
-  try {
-    console.log(`[Storage Pipeline] Tier 1: Trying ImageKit for "${fileName}"...`);
-    const ikRes = await uploadToImageKit(fileBufferOrBase64, fileName, `/skyhaven/${userId || 'vault'}`);
-    console.log(`✅ [Storage Pipeline] Saved successfully to ImageKit: ${ikRes.url}`);
-    return {
-      ...ikRes,
-      provider: 'imagekit',
-      storageKey: ikRes.fileId || `imagekit/${fileName}`,
-    };
-  } catch (err1) {
-    console.warn(`⚠️ [Storage Pipeline] Tier 1 (ImageKit) unavailable or limit reached: ${err1.message}`);
-    errors.push({ tier: 'ImageKit', error: err1.message });
+  // If it's an image, ImageKit gives instant CDN previews & transformations
+  if (isImage) {
+    try {
+      console.log(`[Storage Pipeline] Tier 1: Trying ImageKit for "${fileName}"...`);
+      const ikRes = await withTimeout(
+        uploadToImageKit(fileBufferOrBase64, fileName, `/skyhaven/${userId || 'vault'}`),
+        6000,
+        'ImageKit upload'
+      );
+      console.log(`✅ [Storage Pipeline] Saved successfully to ImageKit: ${ikRes.url}`);
+      return {
+        ...ikRes,
+        provider: 'imagekit',
+        storageKey: ikRes.fileId || `imagekit/${fileName}`,
+      };
+    } catch (err1) {
+      console.warn(`⚠️ [Storage Pipeline] Tier 1 (ImageKit) fallback: ${err1.message}`);
+      errors.push({ tier: 'ImageKit', error: err1.message });
+    }
+
+    try {
+      console.log(`[Storage Pipeline] Tier 2: Falling back to Cloudinary for "${fileName}"...`);
+      const cldRes = await withTimeout(
+        uploadToCloudinary(fileBufferOrBase64, fileName, mimeType),
+        8000,
+        'Cloudinary upload'
+      );
+      console.log(`✅ [Storage Pipeline] Saved successfully to Cloudinary: ${cldRes.url}`);
+      return {
+        ...cldRes,
+        provider: 'cloudinary',
+        storageKey: cldRes.fileId || `cld/${fileName}`,
+      };
+    } catch (err2) {
+      console.warn(`⚠️ [Storage Pipeline] Tier 2 (Cloudinary) fallback: ${err2.message}`);
+      errors.push({ tier: 'Cloudinary', error: err2.message });
+    }
   }
 
-  // --- TIER 2: Cloudinary ---
+  // --- TIER 3 / PRIMARY FOR DOCUMENTS & GENERAL FILES: Supabase Vault ---
   try {
-    console.log(`[Storage Pipeline] Tier 2: Falling back to Cloudinary for "${fileName}"...`);
-    const cldRes = await uploadToCloudinary(fileBufferOrBase64, fileName, mimeType);
-    console.log(`✅ [Storage Pipeline] Saved successfully to Cloudinary: ${cldRes.url}`);
-    return {
-      ...cldRes,
-      provider: 'cloudinary',
-      storageKey: cldRes.fileId || `cld/${fileName}`,
-    };
-  } catch (err2) {
-    console.warn(`⚠️ [Storage Pipeline] Tier 2 (Cloudinary) unavailable or limit reached: ${err2.message}`);
-    errors.push({ tier: 'Cloudinary', error: err2.message });
-  }
-
-  // --- TIER 3: Supabase Vault ---
-  try {
-    console.log(`[Storage Pipeline] Tier 3: Falling back to Supabase Vault for "${fileName}"...`);
+    console.log(`[Storage Pipeline] Uploading to Supabase Vault for "${fileName}"...`);
     const storageKey = `vault/${userId || 'guest'}/${Date.now()}_${fileName.replace(/\s+/g, '_')}`;
     const buffer = Buffer.isBuffer(fileBufferOrBase64)
       ? fileBufferOrBase64
       : Buffer.from(fileBufferOrBase64.replace(/^data:.*?;base64,/, ''), 'base64');
 
-    const sbRes = await uploadToSupabase(buffer, storageKey, mimeType);
+    const sbRes = await withTimeout(
+      uploadToSupabase(buffer, storageKey, mimeType),
+      12000,
+      'Supabase upload'
+    );
     console.log(`✅ [Storage Pipeline] Saved successfully to Supabase: ${sbRes.url}`);
     return {
       ...sbRes,
       provider: 'supabase',
     };
   } catch (err3) {
-    console.error(`❌ [Storage Pipeline] Tier 3 (Supabase) failed: ${err3.message}`);
+    console.error(`❌ [Storage Pipeline] Supabase failed: ${err3.message}`);
     errors.push({ tier: 'Supabase', error: err3.message });
-    throw new Error(`All 3 storage tiers failed. Errors: ${JSON.stringify(errors)}`);
   }
+
+  // Final fallback if non-image fell through and hasn't tried ImageKit/Cloudinary yet
+  if (!isImage) {
+    try {
+      console.log(`[Storage Pipeline] Final fallback: Trying ImageKit raw for "${fileName}"...`);
+      const ikRes = await withTimeout(
+        uploadToImageKit(fileBufferOrBase64, fileName, `/skyhaven/${userId || 'vault'}`),
+        8000,
+        'ImageKit raw'
+      );
+      return {
+        ...ikRes,
+        provider: 'imagekit',
+        storageKey: ikRes.fileId || `imagekit/${fileName}`,
+      };
+    } catch (err4) {
+      errors.push({ tier: 'ImageKit-Raw', error: err4.message });
+    }
+  }
+
+  throw new Error(`All storage tiers failed. Errors: ${JSON.stringify(errors)}`);
 };
 
 /**

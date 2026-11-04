@@ -5,6 +5,7 @@ import { Header } from '../components/common/Header';
 import { Sidebar } from '../components/common/Sidebar';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { EmptyState } from '../components/common/EmptyState';
+import { SkeletonLoader } from '../components/common/SkeletonLoader';
 import { FileGrid } from '../components/files/FileGrid';
 import { FileList } from '../components/files/FileList';
 import { FileInfoDrawer } from '../components/files/FileInfoDrawer';
@@ -15,15 +16,15 @@ import { NewFolderModal } from '../components/upload/NewFolderModal';
 import { CommandPalette } from '../components/common/CommandPalette';
 import { UploadDropzone } from '../components/upload/UploadDropzone';
 import { UploadManager } from '../components/upload/UploadManager';
-import { StorageCard } from '../components/dashboard/StorageCard';
 import { WorkspaceOverview } from '../components/dashboard/WorkspaceOverview';
 import { ProfileSettings } from '../components/settings/ProfileSettings';
 import { StoragePlansModal } from '../components/settings/StoragePlansModal';
-import { AdminView } from '../components/settings/AdminView';
+import { AdminDashboard } from '../components/admin';
 
 export const DashboardPage: React.FC = () => {
   const { currentSection, viewMode, files, folders, isLoading } = useFiles();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isPlansOpen, setIsPlansOpen] = useState(false);
@@ -32,50 +33,50 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
-      {/* Top Application Header */}
       <Header
         onOpenProfile={() => setIsProfileOpen(true)}
         onOpenPlans={() => setIsPlansOpen(true)}
       />
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Persistent Collapsible Sidebar */}
         <Sidebar onOpenPlans={() => setIsPlansOpen(true)} />
 
-        {/* Scrollable Main Workspace */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-8">
           <div className="max-w-7xl mx-auto">
-            {/* Figma Workspace Overview (Good morning Maya, storage widget, library stats, starred) */}
             {currentSection === 'my_files' && (
               <WorkspaceOverview onOpenPlans={() => setIsPlansOpen(true)} />
             )}
 
-            {/* Admin & Security Section */}
+            {/* Admin section — strictly isolated and only available to admins */}
             {currentSection === 'admin' ? (
-              <AdminView />
+              isAdmin ? (
+                <AdminDashboard />
+              ) : (
+                <div className="flex flex-col items-center justify-center py-32 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-semibold text-slate-700 mb-1">Access Restricted</h3>
+                  <p className="text-sm text-slate-400">You don't have permission to view this section.</p>
+                </div>
+              )
             ) : (
               <>
-                {/* Breadcrumbs & View Toggle Controls */}
                 <Breadcrumb />
 
-                {/* Content States */}
-                {isLoading ? (
-                  <div className="py-24 text-center">
-                    <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                    <p className="text-xs font-semibold text-slate-500">Loading files from Cloudflare R2 vault...</p>
-                  </div>
+                {/* Smooth skeleton when loading with zero items */}
+                {isLoading && totalItems === 0 ? (
+                  <SkeletonLoader viewMode={viewMode} />
                 ) : totalItems === 0 ? (
                   <EmptyState
                     type={
-                      currentSection === 'starred'
-                        ? 'starred'
-                        : currentSection === 'trash'
-                        ? 'trash'
-                        : currentSection === 'recent'
-                        ? 'recent'
-                        : currentSection === 'shared_by_me' || currentSection === 'shared_with_me'
-                        ? 'shared'
-                        : 'folder'
+                      currentSection === 'starred' ? 'starred'
+                      : currentSection === 'trash' ? 'trash'
+                      : currentSection === 'recent' ? 'recent'
+                      : currentSection === 'shared_by_me' || currentSection === 'shared_with_me' ? 'shared'
+                      : 'folder'
                     }
                   />
                 ) : viewMode === 'grid' ? (
@@ -89,7 +90,6 @@ export const DashboardPage: React.FC = () => {
         </main>
       </div>
 
-      {/* Global Modals, Drawers & Overlays */}
       <FileInfoDrawer />
       <FilePreviewModal />
       <ShareModal />
@@ -103,3 +103,4 @@ export const DashboardPage: React.FC = () => {
     </div>
   );
 };
+export default DashboardPage;

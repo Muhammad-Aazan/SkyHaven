@@ -23,7 +23,7 @@ export const WorkspaceOverview: React.FC<WorkspaceOverviewProps> = ({ onOpenPlan
   const { files, storageStats, setCurrentSection } = useFiles();
 
   const usedBytes = storageStats?.usedBytes ?? user?.storageUsed ?? 0;
-  const totalBytes = storageStats?.totalQuotaBytes ?? user?.storageQuota ?? (5 * 1024 * 1024 * 1024);
+  const totalBytes = storageStats?.totalQuotaBytes ?? user?.storageQuota ?? (25 * 1024 * 1024 * 1024);
   const percentUsed = totalBytes > 0 ? Math.min(100, Math.round((usedBytes / totalBytes) * 100)) : 0;
   const remainingSpace = formatBytes(Math.max(0, totalBytes - usedBytes));
 
@@ -31,7 +31,7 @@ export const WorkspaceOverview: React.FC<WorkspaceOverviewProps> = ({ onOpenPlan
     ? 'Sky Enterprise'
     : user?.planId === 'pro'
     ? 'Sky Professional'
-    : 'Basic (Starter)';
+    : 'Basic (25 GB)';
 
   const starredFiles = files.filter(f => f.starred).slice(0, 3);
   const recentFiles = files.slice(0, 4);
