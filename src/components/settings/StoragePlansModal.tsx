@@ -15,7 +15,8 @@ export const StoragePlansModal: React.FC<StoragePlansModalProps> = ({ isOpen, on
   const { user, switchPlan } = useAuth();
   const [plans, setPlans] = useState<StoragePlan[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState<string>(user?.planId || 'pro');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(user?.planId || 'free');
 
   React.useEffect(() => {
     storageApi.getPlans().then(res => setPlans(res.data || []));
@@ -23,16 +24,21 @@ export const StoragePlansModal: React.FC<StoragePlansModalProps> = ({ isOpen, on
 
   if (!isOpen) return null;
 
-  const handleUpgrade = async (planId: 'pro' | 'business') => {
+  const handleUpgrade = async (planId: 'free' | 'pro' | 'business') => {
     setIsLoading(true);
+    setErrorMessage('');
     try {
-      await switchPlan(planId);
-      confetti({
-        particleCount: 100,
-        spread: 80,
-        origin: { y: 0.5 }
-      });
-      onClose();
+      const res = await switchPlan(planId);
+      if (!res?.checkoutUrl) {
+        confetti({
+          particleCount: 100,
+          spread: 80,
+          origin: { y: 0.5 }
+        });
+        onClose();
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to change plan. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -76,6 +82,11 @@ export const StoragePlansModal: React.FC<StoragePlansModalProps> = ({ isOpen, on
             <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-lg mx-auto">
               Encrypted, high-performance Cloudflare R2 storage with lightning-fast streaming and zero egress fees.
             </p>
+            {errorMessage && (
+              <div className="mt-3 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold rounded-xl max-w-lg mx-auto">
+                {errorMessage}
+              </div>
+            )}
           </div>
 
           {/* Plans Grid */}
@@ -140,7 +151,7 @@ export const StoragePlansModal: React.FC<StoragePlansModalProps> = ({ isOpen, on
                             : 'bg-slate-900 hover:bg-slate-800 text-white'
                         }`}
                       >
-                        {plan.priceMonthly === 0 ? 'Switch to Starter' : `Upgrade to ${plan.name}`}
+                        {isLoading ? 'Processing...' : plan.id === 'free' ? 'Switch to Starter (25 GB)' : `Upgrade to ${plan.name}`}
                       </button>
                     )}
                   </div>

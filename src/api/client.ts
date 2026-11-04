@@ -494,8 +494,8 @@ export const storageApi = {
     return apiRequest('/storage/plans', 'GET');
   },
 
-  // 62. POST /plans/checkout
-  async startCheckout(planId: 'pro' | 'business') {
+  // 62. POST /plans/checkout (Stripe Checkout or Free Plan Switch)
+  async startCheckout(planId: 'free' | 'pro' | 'business') {
     return apiRequest('/storage/plans/checkout', 'POST', { planId });
   },
 

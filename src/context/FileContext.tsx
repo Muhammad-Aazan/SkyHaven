@@ -90,6 +90,32 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [sortField, setSortField] = useState<SortField>('updatedAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const handleSetCurrentSection = useCallback((section: AppSection) => {
+    setCurrentSection(section);
+    // Immediately filter or clear so previous section's files NEVER linger or flash
+    if (section === 'starred') {
+      setFiles(prev => prev.filter(f => f.starred));
+      setFolders(prev => prev.filter(f => f.starred));
+    } else if (section === 'trash') {
+      setFiles(prev => prev.filter(f => Boolean(f.deletedAt)));
+      setFolders(prev => prev.filter(f => Boolean(f.deletedAt)));
+    } else if (section === 'recent') {
+      setFiles(prev => [...prev].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
+      setFolders([]);
+    } else {
+      setFiles([]);
+      setFolders([]);
+    }
+    setIsLoading(true);
+  }, []);
+
+  const handleSetCurrentFolderId = useCallback((folderId: string | null) => {
+    setCurrentFolderId(folderId);
+    setFiles([]);
+    setFolders([]);
+    setIsLoading(true);
+  }, []);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [fileTypeFilter, setFileTypeFilter] = useState<string>('all');
   const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
@@ -325,8 +351,16 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const toggleStar = async (id: string, type: 'file' | 'folder') => {
     if (type === 'file') {
+      setFiles(prev => {
+        if (currentSection === 'starred') return prev.filter(f => f.id !== id);
+        return prev.map(f => f.id === id ? { ...f, starred: !f.starred } : f);
+      });
       await searchApi.toggleFileStar(id);
     } else {
+      setFolders(prev => {
+        if (currentSection === 'starred') return prev.filter(f => f.id !== id);
+        return prev.map(f => f.id === id ? { ...f, starred: !f.starred } : f);
+      });
       await searchApi.toggleFolderStar(id);
     }
     await refreshData(false);
@@ -362,9 +396,9 @@ export const FileProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <FileContext.Provider
       value={{
         currentSection,
-        setCurrentSection,
+        setCurrentSection: handleSetCurrentSection,
         currentFolderId,
-        setCurrentFolderId,
+        setCurrentFolderId: handleSetCurrentFolderId,
         breadcrumbs,
         files,
         folders,

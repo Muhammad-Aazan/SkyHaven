@@ -12,7 +12,7 @@ interface AuthContextType {
   completeSignup: (name: string, email: string, token: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
-  switchPlan: (planId: 'pro' | 'business') => Promise<void>;
+  switchPlan: (planId: 'free' | 'pro' | 'business') => Promise<any>;
   refreshUser: () => Promise<void>;
 }
 
@@ -83,9 +83,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(res.data);
   };
 
-  const switchPlan = async (planId: 'pro' | 'business') => {
+  const switchPlan = async (planId: 'free' | 'pro' | 'business') => {
     const res = await storageApi.startCheckout(planId);
+    if (res.data?.checkoutUrl) {
+      window.location.href = res.data.checkoutUrl;
+      return res.data;
+    }
     await refreshUser();
+    return res.data;
   };
 
   return (

@@ -37,7 +37,11 @@ router.get('/search', protect, asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: 'Search results.',
-    data: { files, folders, total: files.length + folders.length },
+    data: {
+      files: files.map(f => ({ ...f.toObject(), id: f._id })),
+      folders: folders.map(f => ({ ...f.toObject(), id: f._id })),
+      total: files.length + folders.length,
+    },
   });
 }));
 
@@ -49,7 +53,11 @@ router.get('/recent', protect, asyncHandler(async (req, res) => {
     .sort({ updatedAt: -1 })
     .limit(15);
 
-  res.json({ success: true, message: 'Recent files.', data: files });
+  res.json({
+    success: true,
+    message: 'Recent files.',
+    data: files.map(f => ({ ...f.toObject(), id: f._id })),
+  });
 }));
 
 // =========================================================================
@@ -61,7 +69,14 @@ router.get('/starred', protect, asyncHandler(async (req, res) => {
     Folder.find({ ownerId: req.user._id, starred: true, deletedAt: null }),
   ]);
 
-  res.json({ success: true, message: 'Starred items.', data: { files, folders } });
+  res.json({
+    success: true,
+    message: 'Starred items.',
+    data: {
+      files: files.map(f => ({ ...f.toObject(), id: f._id })),
+      folders: folders.map(f => ({ ...f.toObject(), id: f._id })),
+    },
+  });
 }));
 
 // =========================================================================

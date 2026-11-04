@@ -11,10 +11,16 @@ const PLANS = [
     id: 'free',
     name: 'Sky Starter',
     quotaBytes: 25 * 1024 * 1024 * 1024,
-    quotaLabel: '25 GB Cloud Storage',
+    quotaLabel: '25 GB Total Free Storage',
     priceMonthly: 0,
-    description: 'Generous 25 GB free capacity for everyone, secure backups and personal sharing.',
-    features: ['25 GB encrypted storage', '30-day version history', '5 GB maximum single file size', 'Standard link sharing'],
+    description: 'Generous 25 GB total capacity for every user. Free forever with zero egress fees.',
+    features: [
+      '25 GB total high-speed encrypted storage',
+      '30-day version history',
+      '5 GB maximum single file size',
+      'Standard secure link sharing',
+      'Zero credit card required'
+    ],
   },
   {
     id: 'pro',
@@ -24,8 +30,14 @@ const PLANS = [
     quotaBytes: 2 * 1024 * 1024 * 1024 * 1024,
     quotaLabel: '2 TB High-Speed Storage',
     priceMonthly: 12,
-    description: 'Generous capacity, 4K video previews, and advanced link controls.',
-    features: ['2 TB high-speed Cloudflare R2 storage', '180-day version history', 'Password & expiring share links', 'Priority 10 Gbps global CDN routing'],
+    description: 'Generous 2 TB capacity, 4K streaming previews, and advanced link controls.',
+    features: [
+      '2 TB high-speed Cloudflare R2 storage',
+      '180-day version history',
+      'Password & expiring share links',
+      'Priority 10 Gbps global CDN routing',
+      'Custom branding on shared links'
+    ],
   },
   {
     id: 'business',
@@ -35,7 +47,13 @@ const PLANS = [
     quotaLabel: '10 TB Collaborative Vault',
     priceMonthly: 29,
     description: 'For growing creative teams, engineering vaults, and granular controls.',
-    features: ['10 TB pooled team storage', 'Unlimited file versioning', 'Audit log exports & SSO / SAML', 'Granular editor/viewer permissions', 'Dedicated 24/7 SLA support'],
+    features: [
+      '10 TB pooled team storage',
+      'Unlimited file versioning',
+      'Audit log exports & SSO / SAML',
+      'Granular editor/viewer permissions',
+      'Dedicated 24/7 SLA support'
+    ],
   },
 ];
 
@@ -105,43 +123,147 @@ router.get('/plans', asyncHandler(async (req, res) => {
 }));
 
 // =========================================================================
-// POST /api/v1/storage/plans/checkout
+// POST /api/v1/storage/plans/checkout (Stripe Checkout + Free Plan Downgrade)
 // =========================================================================
 router.post('/plans/checkout', protect, asyncHandler(async (req, res) => {
   const { planId } = req.body;
-  if (!['pro', 'business'].includes(planId)) {
-    return res.status(400).json({ success: false, message: 'Invalid plan.' });
+  if (!['free', 'pro', 'business'].includes(planId)) {
+    return res.status(400).json({ success: false, message: 'Invalid plan selected.' });
   }
 
   const plan = PLANS.find(p => p.id === planId);
+  const user = await User.findById(req.user._id);
 
-  // In production: integrate Stripe/Razorpay here and return a checkout session URL
-  // For now, simulate immediate upgrade
+  // 1. FREE PLAN: Switch / Downgrade directly
+  if (planId === 'free') {
+    const freeQuota = 25 * 1024 * 1024 * 1024; // 25 GB
+    if (user.storageUsed > freeQuota) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot switch to Starter: Your used storage (${(user.storageUsed / (1024 * 1024 * 1024)).toFixed(2)} GB) exceeds the 25 GB limit. Please delete some files first.`,
+      });
+    }
+
+    user.planId = 'free';
+    user.storageQuota = freeQuota;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: 'Successfully switched to Sky Starter (25 GB Total Free Storage).',
+      data: {
+        plan,
+        upgraded: false,
+        user: user.toPublic(),
+      },
+    });
+  }
+
+  // 2. PAID PLANS (pro, business): Use Stripe if configured
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (stripeKey) {
+    try {
+      const stripe = require('stripe')(stripeKey);
+      const origin = req.headers.origin || req.headers.referer?.replace(/\/$/, '') || process.env.FRONTEND_URL || 'https://skyhaven-vert.vercel.app';
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: plan.name,
+                description: `${plan.quotaLabel} — SkyHeaven Cloud Storage Vault`,
+              },
+              unit_amount: plan.priceMonthly * 100, // in cents
+              recurring: { interval: 'month' },
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'subscription',
+        success_url: `${origin}/dashboard?upgraded=${planId}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/dashboard?modal=plans`,
+        client_reference_id: req.user._id.toString(),
+        customer_email: req.user.email,
+        metadata: {
+          userId: req.user._id.toString(),
+          planId: planId,
+        },
+      });
+
+      return res.json({
+        success: true,
+        message: `Stripe checkout session initialized for ${plan.name}.`,
+        data: {
+          checkoutUrl: session.url,
+          sessionId: session.id,
+          plan,
+        },
+      });
+    } catch (stripeErr) {
+      console.warn('⚠️ Stripe error, falling back to instant activation:', stripeErr.message);
+    }
+  }
+
+  // 3. Fallback / Test activation if Stripe key is not provided in env
   const newQuota = planId === 'business'
     ? parseInt(process.env.BUSINESS_QUOTA || '10995116277760')
     : parseInt(process.env.PRO_QUOTA || '2199023255552');
 
-  await User.findByIdAndUpdate(req.user._id, { planId, storageQuota: newQuota });
+  user.planId = planId;
+  user.storageQuota = newQuota;
+  await user.save();
 
   res.json({
     success: true,
-    message: `Upgraded to ${plan.name}.`,
+    message: `Upgraded to ${plan.name}!`,
     data: {
       checkoutSessionId: 'cs_' + Date.now(),
       redirectUrl: `/dashboard?upgraded=${planId}`,
       plan,
+      user: user.toPublic(),
     },
   });
 }));
 
 // =========================================================================
-// POST /api/v1/storage/webhooks/payment  — payment webhook
+// POST /api/v1/storage/webhooks/payment  — Stripe Webhook
 // =========================================================================
 router.post('/webhooks/payment', asyncHandler(async (req, res) => {
-  // In production: verify Stripe signature here
-  // stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET)
-  console.log('[Webhook] Payment event received:', req.body?.type);
-  res.json({ success: true, message: 'Webhook received.', data: { received: true, verified: true } });
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event = req.body;
+
+  if (stripeKey && webhookSecret && req.headers['stripe-signature']) {
+    try {
+      const stripe = require('stripe')(stripeKey);
+      event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], webhookSecret);
+    } catch (err) {
+      console.error('❌ [Stripe Webhook Error]:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+  }
+
+  // Handle successful checkout subscription
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const userId = session.client_reference_id || session.metadata?.userId;
+    const planId = session.metadata?.planId;
+
+    if (userId && planId) {
+      const newQuota = planId === 'business'
+        ? parseInt(process.env.BUSINESS_QUOTA || '10995116277760')
+        : parseInt(process.env.PRO_QUOTA || '2199023255552');
+
+      await User.findByIdAndUpdate(userId, { planId, storageQuota: newQuota });
+      console.log(`✅ [Stripe Webhook] User ${userId} upgraded to ${planId}`);
+    }
+  }
+
+  res.json({ success: true, received: true });
 }));
 
 module.exports = router;
