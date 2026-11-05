@@ -26,6 +26,17 @@ const AppContent: React.FC = () => {
       const token = path.replace('/share/', '');
       if (token) { setShareToken(token); setCurrentPage('share'); }
       else setCurrentPage('404');
+    } else if (path === '/dashboard') {
+      // Stripe & direct dashboard links — always go to dashboard (or login if not authed)
+      if (isAuthenticated) {
+        setCurrentPage('dashboard');
+        if (search.includes('modal=plans')) setIsUpgradeOpen(true);
+      } else if (!isLoading) {
+        // Not logged in — show landing with login modal
+        setCurrentPage('landing');
+        setAuthView('login');
+        setIsAuthOpen(true);
+      }
     } else if (path === '/' || path === '') {
       if (search.includes('view=dashboard') || isAuthenticated) {
         setCurrentPage('dashboard');
@@ -38,7 +49,7 @@ const AppContent: React.FC = () => {
     } else {
       setCurrentPage('404');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isLoading]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
