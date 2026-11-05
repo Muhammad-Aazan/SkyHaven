@@ -43,28 +43,33 @@ export const DashboardPage: React.FC = () => {
     }
 
     if (sessionId) {
-      storageApi.verifySession(sessionId).then(async (res) => {
-        if (res.success) {
+      // Verify payment with backend, then refresh user and fire confetti
+      storageApi.verifySession(sessionId)
+        .then(async (res) => {
+          if (res.success) {
+            await refreshUser();
+            confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
+          } else {
+            // Session found but not paid yet — still refresh to get latest plan
+            await refreshUser();
+          }
+        })
+        .catch(async () => {
+          // Network / backend error — still refresh user silently
           await refreshUser();
-          confetti({
-            particleCount: 150,
-            spread: 90,
-            origin: { y: 0.5 },
-          });
-        }
-      }).catch(console.error).finally(() => {
-        window.history.replaceState({}, '', '/dashboard');
-      });
+        })
+        .finally(() => {
+          // Always clean the URL regardless of outcome
+          window.history.replaceState({}, '', '/dashboard');
+        });
     } else if (upgraded) {
-      refreshUser();
-      confetti({
-        particleCount: 100,
-        spread: 80,
-        origin: { y: 0.5 },
-      });
+      // Non-Stripe / fallback upgrade — just refresh + confetti
+      refreshUser().then(() => {
+        confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
+      }).catch(console.error);
       window.history.replaceState({}, '', '/dashboard');
     }
-  }, [refreshUser]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalItems = files.length + folders.length;
 

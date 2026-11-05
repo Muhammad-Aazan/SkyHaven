@@ -8,6 +8,18 @@ const { asyncHandler } = require('../middleware/error');
 
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY;
 
+// Resolve the correct frontend origin — always pick the first clean URL from FRONTEND_URL
+const getFrontendOrigin = (req) => {
+  // 1. Trust the request origin if it looks like a real frontend
+  const reqOrigin = req.headers.origin;
+  if (reqOrigin && reqOrigin.startsWith('http') && !reqOrigin.includes(',')) {
+    return reqOrigin.replace(/\/$/, '');
+  }
+  // 2. Fall back to the first URL in FRONTEND_URL env (comma-separated)
+  const envUrl = process.env.FRONTEND_URL || 'https://skyhaven-vert.vercel.app';
+  return envUrl.split(',')[0].trim().replace(/\/$/, '');
+};
+
 const PLANS = [
   {
     id: 'free',
@@ -166,7 +178,7 @@ router.post('/plans/checkout', protect, asyncHandler(async (req, res) => {
   if (stripeKey) {
     try {
       const stripe = require('stripe')(stripeKey);
-      const origin = req.headers.origin || req.headers.referer?.replace(/\/$/, '') || process.env.FRONTEND_URL || 'https://skyhaven-vert.vercel.app';
+      const origin = getFrontendOrigin(req);
 
       const session = await stripe.checkout.sessions.create({
         line_items: [
